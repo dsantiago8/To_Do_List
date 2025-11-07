@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>To-Do-List</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="header">
+      <h1>To-Do</h1>
+      <p class="muted">Pay bills • Clean room  • Drag & Drop</p>
+    </header>
+
+    <form id="taskForm" class="task-form" autocomplete="off" aria-label="Add task">
+      <label class="sr-only" for="taskInput">New task</label>
+      <input id="taskInput" name="task" type="text" placeholder="Add a new task..." required />
+      <button type="submit" class="btn">Add</button>
+    </form>
+
+    <div id="live" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+  </main>
+
+  <script src="script.js" defer></script>
+</body>
+</html>
