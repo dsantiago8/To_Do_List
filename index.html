@@ -19,6 +19,27 @@
       <button type="submit" class="btn">Add</button>
     </form>
 
+    <section class="toolbar" aria-label="Task actions">
+      <div class="counters" aria-live="polite" aria-atomic="true">
+        <span id="countAll">0</span> total •
+        <span id="countOpen">0</span> open •
+        <span id="countDone">0</span> done
+      </div>
+      <div class="filters">
+        <button class="chip is-active" data-filter="all" aria-pressed="true">All</button>
+        <button class="chip" data-filter="open" aria-pressed="false">Open</button>
+        <button class="chip" data-filter="done" aria-pressed="false">Done</button>
+      </div>
+    </section>
+
+    <ul id="taskList" class="task-list" aria-label="Tasks"></ul>
+
+    <footer class="footer">
+      <button id="clearDone" class="link">Clear completed</button>
+      <span class="drag-hint muted">Tip: drag the ⋮⋮ handle to reorder</span>
+    </footer>
+
+
     <div id="live" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
   </main>
 
