@@ -95,5 +95,97 @@ body{
     color: #fff;
     background: color-mix(in oklab, var(--accent) 15%, #0a0f1c);
 }
-  
-  
+
+.task-list{
+    list-style: none;
+    padding: 0;
+    margin: 12px 0 6px;
+    display: grid;
+    gap: .5rem;
+}
+
+/* Individual task item (created by JS) */
+.task{
+    display: grid;
+    grid-template-columns: 28px 1fr auto;
+    align-items: center;
+    gap: .5rem;
+    background: #0a0f1c;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 10px;
+}
+.task[aria-grabbed="true"]{
+    outline: 2px dashed var(--ring);
+    outline-offset: 2px;
+}
+
+/* Drag handle */
+.task__drag{
+    font: 900 16px/1 monospace;
+    cursor: grab;
+    user-select: none;
+    text-align: center;
+}
+
+/* Task title */
+.task__title{ overflow-wrap: anywhere; }
+.task__title.is-done{
+    text-decoration: line-through;
+    color: color-mix(in oklab, var(--text) 55%, #6b7280);
+}
+
+/* Buttons inside a task */
+.task__actions{ display: flex; gap: .25rem; }
+.icon-btn{
+    border: 1px solid var(--border);
+    background: #0a0f1c;
+    color: var(--text);
+    padding: 6px 8px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+.icon-btn:hover{ border-color: var(--ring); }
+.icon-btn.delete:hover{ border-color: var(--danger); color: var(--danger); }
+.icon-btn.save{ background: color-mix(in oklab, var(--success) 20%, #0a0f1c); border-color: transparent; color: #fff; }
+
+/* Inline editor (when editing a title) */
+input.edit{
+    width: 100%;
+    border-radius: 8px;
+    border: 1px solid var(--ring);
+    padding: 8px 10px;
+    background: #0a0f1c;
+    color: var(--text);
+}
+
+/* Footer */
+.footer{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 6px;
+}
+.link{
+    background: none;
+    border: none;
+    color: var(--muted);
+    text-decoration: underline;
+    cursor: pointer;
+}
+.link:hover{ color: var(--text); }
+.drag-hint{ color: var(--muted); font-size: .9rem; }
+
+/* Screen-reader-only utility (already present in HTML) */
+.sr-only{
+    position: absolute !important;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px; overflow: hidden;
+    clip: rect(0,0,0,0); border: 0;
+}
+
+/* Improve responsiveness on smaller devices */
+@media (max-width:520px){
+    .task{ grid-template-columns: 24px 1fr auto; padding: 8px; }
+    .drag-hint{ display: none; } 
+  }
