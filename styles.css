@@ -105,16 +105,17 @@ body{
 }
 
 /* Individual task item (created by JS) */
-.task{
+.task {
     display: grid;
-    grid-template-columns: 28px 1fr auto;
+    /* now 4 columns: drag | checkbox | text | buttons */
+    grid-template-columns: 24px 24px 1fr auto;
     align-items: center;
     gap: .5rem;
     background: #0a0f1c;
     border: 1px solid var(--border);
     border-radius: 14px;
     padding: 10px;
-}
+  }
 .task[aria-grabbed="true"]{
     outline: 2px dashed var(--ring);
     outline-offset: 2px;
