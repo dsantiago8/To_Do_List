@@ -116,6 +116,8 @@ body{
     border-radius: 14px;
     padding: 10px;
   }
+
+/* TODO: Not using anymore but will reimplement */
 .task[aria-grabbed="true"]{
     outline: 2px dashed var(--ring);
     outline-offset: 2px;
@@ -128,6 +130,8 @@ body{
     user-select: none;
     text-align: center;
 }
+/* Fades the item while it’s being dragged */
+.task.dragging { opacity: .6; }
 
 /* Task title */
 .task__title{ overflow-wrap: anywhere; }

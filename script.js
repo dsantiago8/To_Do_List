@@ -67,6 +67,7 @@
       drag.className = "task__drag";
       drag.title = "Drag to reorder";
       drag.textContent = "⋮⋮";
+      drag.draggable = true; 
   
       // Checkbox: mark done / open
       const cb = document.createElement("input");
@@ -102,29 +103,13 @@
       li.append(drag, cb, title, actions);
   
       // Drag & drop behavior
-      // TODO: Drag and drop not working
-      li.addEventListener("dragstart", (e) => {
-        e.dataTransfer.setData("text/plain", task.id);
-        li.setAttribute("aria-grabbed", "true");
+      drag.addEventListener("dragstart", (e) => {
+        e.dataTransfer.effectAllowed = "move";
+        li.classList.add("dragging");           // marks the row we’re moving
       });
-      li.addEventListener("dragend", () => {
-        li.setAttribute("aria-grabbed", "false");
-      });
-      li.addEventListener("dragover", (e) => {
-        e.preventDefault(); // allow drop
-        const after = getAfterElement(list, e.clientY);
-        const draggingId = e.dataTransfer.getData("text/plain");
-        const draggingEl = [...list.children].find(el => el.dataset.id === draggingId);
-        if (!draggingEl || draggingEl === li) return;
-        if (after == null) list.appendChild(draggingEl);
-        else list.insertBefore(draggingEl, after);
-      });
-      li.addEventListener("drop", (e) => {
-        e.preventDefault();
-        const order = [...list.children].map(el => el.dataset.id);
-        tasks.sort((a,b) => order.indexOf(a.id) - order.indexOf(b.id));
-        announce("Tasks reordered");
-        render();
+    
+      drag.addEventListener("dragend", () => {
+        li.classList.remove("dragging");
       });
   
       return li;
@@ -174,13 +159,12 @@
     }
   
     // Decide where to insert dragging element based on cursor Y
-    // TODO: drag and drop not working
     function getAfterElement(container, mouseY) {
-      const els = [...container.querySelectorAll(".task:not([aria-grabbed='true'])")];
+      const els = [...container.querySelectorAll(".task:not(.dragging)")];
       return els.reduce((closest, child) => {
         const box = child.getBoundingClientRect();
         const offset = mouseY - box.top - box.height / 2;
-        return offset < 0 && offset > closest.offset
+        return (offset < 0 && offset > closest.offset)
           ? { offset, element: child }
           : closest;
       }, { offset: Number.NEGATIVE_INFINITY, element: null }).element;
@@ -190,6 +174,27 @@
     function announce(msg){ live.textContent = msg; }
   
     /* Events: add / filter / clear */
+
+    // Container-level DnD handlers
+    list.addEventListener("dragover", (e) => {
+      e.preventDefault(); // allow dropping
+      const after = getAfterElement(list, e.clientY);
+      const draggingEl = list.querySelector(".task.dragging");
+      if (!draggingEl) return;
+
+      if (after == null) list.appendChild(draggingEl);
+      else list.insertBefore(draggingEl, after);
+    });
+
+    list.addEventListener("drop", (e) => {
+      e.preventDefault();
+      // Persist the new order into the tasks array
+      const order = [...list.children].map(el => el.dataset.id);
+      tasks.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+      announce("Tasks reordered");
+      write();        // save to localStorage immediately
+    });
+
     form.addEventListener("submit", (e) => {
       e.preventDefault();
       const text = taskInput.value.trim();
