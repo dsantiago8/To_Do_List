@@ -136,7 +136,15 @@ body{
     text-align: center;
 }
 /* Fades the item while it’s being dragged */
-.task.dragging { opacity: .6; }
+.task.dragging { 
+    opacity: .6;
+    background: color-mix(in oklab, var(--panel) 80%, var(--ring));
+    transform: translateY(-2px);
+    border-color: var(--ring);
+    box-shadow: 0 0 12px rgba(125, 211, 252, 0.25); /* subtle glow for motion */
+    opacity: 0.9; /* makes it look lifted */
+    cursor: grabbing;
+}
 
 /* Task title */
 .task__title{ overflow-wrap: anywhere; }
