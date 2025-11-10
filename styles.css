@@ -122,6 +122,11 @@ body{
     outline: 2px dashed var(--ring);
     outline-offset: 2px;
 }
+.task:hover {
+    background: color-mix(in oklab, var(--panel) 80%, var(--ring));
+    transform: translateY(-2px);
+    border-color: var(--ring);
+}
 
 /* Drag handle */
 .task__drag{
