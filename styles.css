@@ -7,7 +7,8 @@
     --ring: #7dd3fc;        
     --accent: #60a5fa;      
     --delete: #f87171;      
-    --success: #22c55e;  
+    --success: #22c55e;
+    --page-gutter: clamp(16px, 5vw, 32px);  
   }
 
 * { box-sizing: border-box; }
@@ -18,6 +19,8 @@ body{
   font: 16px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   color: var(--text);
   background: var(--bg);
+  padding-inline: max(var(--page-gutter), env(safe-area-inset-left));
+  /* padding-block: var(--page-gutter); */
 }
 
 .app{
@@ -115,13 +118,8 @@ body{
     border: 1px solid var(--border);
     border-radius: 14px;
     padding: 10px;
-  }
-
-/* TODO: Not using anymore but will reimplement */
-.task[aria-grabbed="true"]{
-    outline: 2px dashed var(--ring);
-    outline-offset: 2px;
 }
+
 .task:hover {
     background: color-mix(in oklab, var(--panel) 80%, var(--ring));
     transform: translateY(-2px);
