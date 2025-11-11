@@ -20,7 +20,6 @@ body{
   color: var(--text);
   background: var(--bg);
   padding-inline: max(var(--page-gutter), env(safe-area-inset-left));
-  /* padding-block: var(--page-gutter); */
 }
 
 .app{
@@ -132,7 +131,12 @@ body{
     cursor: grab;
     user-select: none;
     text-align: center;
-}
+    /* Needed for mobile DnD */
+    -webkit-user-drag: none;        /* Safari: don't try to drag an image/ghost */
+    -webkit-tap-highlight-color: transparent;
+    touch-action: none;              /* stop page from scrolling while dragging */
+
+}  
 /* Fades the item while it’s being dragged */
 .task.dragging { 
     opacity: .6;
@@ -202,6 +206,25 @@ input.edit{
 
 /* Improve responsiveness on smaller devices */
 @media (max-width:520px){
-    .task{ grid-template-columns: 24px 1fr auto; padding: 8px; }
-    .drag-hint{ display: none; } 
+    .task {
+        display: grid;
+        /* now 4 columns: drag | checkbox | text | buttons */
+        grid-template-columns: 24px 24px 1fr auto;
+        align-items: center;
+        gap: .5rem;
+        background: #0a0f1c;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 10px;
+    }
+    /* Fades the item while it’s being dragged */
+    .task.dragging { 
+        opacity: .6;
+        background: color-mix(in oklab, var(--panel) 80%, var(--ring));
+        transform: translateY(-2px);
+        border-color: var(--ring);
+        box-shadow: 0 0 12px rgba(125, 211, 252, 0.25); /* subtle glow for motion */
+        opacity: 0.9; /* makes it look lifted */
+        cursor: grabbing;
+    } 
   }
