@@ -1,7 +1,6 @@
 window.addEventListener("DOMContentLoaded", () => {
   (function () {
     /* Storage  */
-    //do i need to host the key elsewhere?
     const STORAGE_KEY = "todo_tasks_v1";
   
     /** @type {{id:string,text:string,done:boolean}[]} */
@@ -36,11 +35,11 @@ window.addEventListener("DOMContentLoaded", () => {
     const hasTouch = (navigator.maxTouchPoints || 0) > 0
     || (window.matchMedia?.("(pointer: coarse)")?.matches ?? false);
   
-    // Desktop native DnD only when *not* touch.
+    // Desktop native DnD only when NOT touch.
     const usePointerFallback = hasTouch;
     const supportsNativeDnD = !usePointerFallback && ("draggable" in document.createElement("div"));
   
-    // Optional: set a CSS flag so touch-only styles don't affect desktop
+    // CSS flag so touch-only styles don't affect desktop
     document.documentElement.classList.toggle("fallback-dnd", usePointerFallback);
   
     // Use these during touch/pointer drag
@@ -114,59 +113,103 @@ window.addEventListener("DOMContentLoaded", () => {
       // assemble row
       li.append(drag, cb, title, actions);
     
-      /* ---------------------------
-         Drag & Drop wiring
-         --------------------------- */
+      // Drag and drop 
     
       if (usePointerFallback) {
         let localPointerId = null;
+        let grabOffsetY = 0;
+        let startRect = null;
+        let placeholder = null;
       
         const move = (e) => {
           if (!peDraggingEl || e.pointerId !== localPointerId) return;
-          e.preventDefault(); // prevent page scroll
+          e.preventDefault();
+      
+          // keep the dragged card under the finger
+          const top = e.clientY - grabOffsetY;
+          peDraggingEl.style.top = `${top}px`;
+      
+          // choose target slot by finger Y, move placeholder there
           const after = getAfterElement(list, e.clientY);
-          if (after == null) list.appendChild(peDraggingEl);
-          else list.insertBefore(peDraggingEl, after);
+          if (after == null) list.appendChild(placeholder);
+          else list.insertBefore(placeholder, after);
         };
       
         const finish = () => {
           if (!peDraggingEl) return;
-          drag.releasePointerCapture(localPointerId);
-          li.classList.remove("dragging");
+          try { drag.releasePointerCapture(localPointerId); } catch {}
+      
+          // insert card where the placeholder sits
+          list.insertBefore(peDraggingEl, placeholder);
+          placeholder.remove();
+      
+          // restore styles/state
+          peDraggingEl.classList.remove("dragging");
+          peDraggingEl.style.cssText = "";   // clears fixed/left/top/width
+          list.classList.remove("dragging-any");
+      
           peDraggingEl = null;
           localPointerId = null;
+          startRect = null;
+          placeholder = null;
+      
+          window.removeEventListener("pointermove", move, { passive: false });
+          window.removeEventListener("pointerup", finish);
+      
+          // persist order
           const order = [...list.children].map(el => el.dataset.id);
           tasks.sort((a,b) => order.indexOf(a.id) - order.indexOf(b.id));
           write();
         };
       
         drag.addEventListener("pointerdown", (e) => {
+          e.preventDefault();
           peDraggingEl = li;
           localPointerId = e.pointerId;
-          drag.setPointerCapture(localPointerId);
+      
+          startRect = li.getBoundingClientRect();
+          grabOffsetY = e.clientY - startRect.top;
+      
+          // placeholder keeps layout height
+          placeholder = document.createElement("div");
+          placeholder.className = "task placeholder";
+          placeholder.style.height = `${startRect.height}px`;
+          list.insertBefore(placeholder, li.nextSibling);
+      
+          // lift the card under finger
+          try { drag.setPointerCapture(localPointerId); } catch {}
           li.classList.add("dragging");
+          list.classList.add("dragging-any");
+      
+          li.style.position = "fixed";
+          li.style.left = `${startRect.left}px`;
+          li.style.top = `${startRect.top}px`;
+          li.style.width = `${startRect.width}px`;
+          li.style.pointerEvents = "none"; // don’t intercept hit tests
+      
+          window.addEventListener("pointermove", move, { passive: false });
+          window.addEventListener("pointerup", finish, { passive: false });
         });
       
-        // IMPORTANT: move listener on the handle that owns the capture
-        drag.addEventListener("pointermove", move, { passive: false });
-      
-        drag.addEventListener("pointerup", finish);
         drag.addEventListener("pointercancel", finish);
       }else {
         drag.addEventListener("dragstart", (e) => {
           e.dataTransfer.setData("text/plain", task.id);
           e.dataTransfer.effectAllowed = "move";
-      
-          // make a lightweight ghost
+        
+          const rect = li.getBoundingClientRect();
+          const offsetX = e.clientX - rect.left;
+          const offsetY = e.clientY - rect.top;
+          // Drag ghost
           const ghost = li.cloneNode(true);
           ghost.style.position = "absolute";
           ghost.style.top = "-10000px";
           ghost.style.left = "-10000px";
           ghost.style.width = getComputedStyle(li).width;
           document.body.appendChild(ghost);
-          e.dataTransfer.setDragImage(ghost, 12, 12);
+          e.dataTransfer.setDragImage(ghost, offsetX, offsetY);
           setTimeout(() => document.body.removeChild(ghost), 0);
-      
+        
           li.classList.add("dragging");
         });
         drag.addEventListener("dragend", () => {
@@ -236,11 +279,8 @@ window.addEventListener("DOMContentLoaded", () => {
     //announcements for screen readers
     function announce(msg){ live.textContent = msg; }
   
-    /* Events: add / filter / clear */
-  
-    // Container-level DnD handlers
-    // Mobile/touch reorder while moving
-  
+    //  Events: add / filter / clear
+    // DnD handlers
     // Desktop live preview + drop
     list.addEventListener("dragover", (e) => {
       e.preventDefault();
