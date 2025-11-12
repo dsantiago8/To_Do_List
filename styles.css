@@ -1,3 +1,4 @@
+
 :root{
     --bg: #0f172a;          
     --panel: #0b1220;       
@@ -109,7 +110,7 @@ body{
 /* Individual task item (created by JS) */
 .task {
     display: grid;
-    /* 4 columns: drag | checkbox | text | buttons */
+    /* now 4 columns: drag | checkbox | text | buttons */
     grid-template-columns: 24px 24px 1fr auto;
     align-items: center;
     gap: .5rem;
@@ -127,24 +128,27 @@ body{
 
 /* Drag handle */
 .task__drag{
-    font: 900 16px/1 monospace;
     cursor: grab;
     user-select: none;
     text-align: center;
-    /* Needed for mobile DnD */
-    -webkit-user-drag: none;       
-    -webkit-tap-highlight-color: transparent;
-    touch-action: none;              /* stop page from scrolling while dragging */
+}
 
-}  
+/* Only on touch/fallback so it doesn’t suppress desktop DnD */
+.fallback-dnd .task__drag{
+    width: 36px;               
+    -webkit-user-drag: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: none; /* prevent scrolling while dragging */
+}
+    
 /* Fades the item while it’s being dragged */
 .task.dragging { 
     opacity: .6;
     background: color-mix(in oklab, var(--panel) 80%, var(--ring));
     transform: translateY(-2px);
     border-color: var(--ring);
-    box-shadow: 0 0 12px rgba(125, 211, 252, 0.25);
-    opacity: 0.9;
+    box-shadow: 0 0 12px rgba(125, 211, 252, 0.25); /* subtle glow for motion */
+    opacity: 0.9; /* makes it look lifted */
     cursor: grabbing;
 }
 

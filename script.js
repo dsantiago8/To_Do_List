@@ -1,6 +1,7 @@
-
-   (function () {
+window.addEventListener("DOMContentLoaded", () => {
+  (function () {
     /* Storage  */
+    //do i need to host the key elsewhere?
     const STORAGE_KEY = "todo_tasks_v1";
   
     /** @type {{id:string,text:string,done:boolean}[]} */
@@ -32,13 +33,21 @@
     const filterButtons = Array.from(document.querySelectorAll(".chip"));
     let filter = "all"; // 'all' | 'open' | 'done'
     
-    // For mobile D&D
-    const isTouchLike = window.matchMedia?.("(pointer: coarse)")?.matches ?? false;
-    // Used these during touch/pointer drag
+    const hasTouch = (navigator.maxTouchPoints || 0) > 0
+    || (window.matchMedia?.("(pointer: coarse)")?.matches ?? false);
+  
+    // Desktop native DnD only when *not* touch.
+    const usePointerFallback = hasTouch;
+    const supportsNativeDnD = !usePointerFallback && ("draggable" in document.createElement("div"));
+  
+    // Optional: set a CSS flag so touch-only styles don't affect desktop
+    document.documentElement.classList.toggle("fallback-dnd", usePointerFallback);
+  
+    // Use these during touch/pointer drag
     let peDraggingEl = null;      // <li.task> being dragged
     let pePointerId = null;       // pointer id to track
-
-
+  
+  
     //rendering
     function render() {
       // Filter the model before rendering
@@ -63,74 +72,112 @@
   
     // Create a <li> for one task
     function renderItem(task) {
+      // <li> wrapper
       const li = document.createElement("li");
       li.className = "task";
-      li.dataset.id = task.id;           
+      li.dataset.id = task.id;
     
+      // drag handle: ⋮⋮
       const drag = document.createElement("div");
       drag.className = "task__drag";
       drag.title = "Drag to reorder";
       drag.textContent = "⋮⋮";
-      drag.draggable = !isTouchLike;     // desktop only
+      drag.draggable = supportsNativeDnD; // desktop only
     
+      // checkbox (done/open)
       const cb = document.createElement("input");
       cb.type = "checkbox";
       cb.checked = task.done;
-      cb.addEventListener("change", () => { task.done = cb.checked; render(); });
+      cb.addEventListener("change", () => {
+        task.done = cb.checked;
+        render();
+      });
     
+      // title
       const title = document.createElement("span");
       title.className = "task__title" + (task.done ? " is-done" : "");
       title.textContent = task.text;
+      title.addEventListener("dblclick", () => startEdit(li, task));
     
+      // actions
       const actions = document.createElement("div");
       actions.className = "task__actions";
       const editBtn = iconBtn("Edit");
       const delBtn = iconBtn("Delete", "delete");
       actions.append(editBtn, delBtn);
       editBtn.addEventListener("click", () => startEdit(li, task));
-      delBtn.addEventListener("click", () => { tasks = tasks.filter(t => t.id !== task.id); render(); });
+      delBtn.addEventListener("click", () => {
+        tasks = tasks.filter(t => t.id !== task.id);
+        render();
+      });
     
+      // assemble row
       li.append(drag, cb, title, actions);
     
-      // Drag & drop
-      if (!isTouchLike) {
-        // Desktop (native DnD) 
+      /* ---------------------------
+         Drag & Drop wiring
+         --------------------------- */
+    
+      if (usePointerFallback) {
+        let localPointerId = null;
+      
+        const move = (e) => {
+          if (!peDraggingEl || e.pointerId !== localPointerId) return;
+          e.preventDefault(); // prevent page scroll
+          const after = getAfterElement(list, e.clientY);
+          if (after == null) list.appendChild(peDraggingEl);
+          else list.insertBefore(peDraggingEl, after);
+        };
+      
+        const finish = () => {
+          if (!peDraggingEl) return;
+          drag.releasePointerCapture(localPointerId);
+          li.classList.remove("dragging");
+          peDraggingEl = null;
+          localPointerId = null;
+          const order = [...list.children].map(el => el.dataset.id);
+          tasks.sort((a,b) => order.indexOf(a.id) - order.indexOf(b.id));
+          write();
+        };
+      
+        drag.addEventListener("pointerdown", (e) => {
+          peDraggingEl = li;
+          localPointerId = e.pointerId;
+          drag.setPointerCapture(localPointerId);
+          li.classList.add("dragging");
+        });
+      
+        // IMPORTANT: move listener on the handle that owns the capture
+        drag.addEventListener("pointermove", move, { passive: false });
+      
+        drag.addEventListener("pointerup", finish);
+        drag.addEventListener("pointercancel", finish);
+      }else {
         drag.addEventListener("dragstart", (e) => {
-          e.dataTransfer.effectAllowed = "move";
           e.dataTransfer.setData("text/plain", task.id);
+          e.dataTransfer.effectAllowed = "move";
+      
+          // make a lightweight ghost
+          const ghost = li.cloneNode(true);
+          ghost.style.position = "absolute";
+          ghost.style.top = "-10000px";
+          ghost.style.left = "-10000px";
+          ghost.style.width = getComputedStyle(li).width;
+          document.body.appendChild(ghost);
+          e.dataTransfer.setDragImage(ghost, 12, 12);
+          setTimeout(() => document.body.removeChild(ghost), 0);
+      
           li.classList.add("dragging");
         });
         drag.addEventListener("dragend", () => {
           li.classList.remove("dragging");
         });
-      } else {
-        // Mobile (pointer events fallback)
-        const finish = () => {
-          if (!peDraggingEl) return;
-          drag.releasePointerCapture(pePointerId);
-          pePointerId = null;
-          peDraggingEl.classList.remove("dragging");
-          peDraggingEl = null;
-          // Persist order
-          const order = [...list.children].map(el => el.dataset.id);
-          tasks.sort((a,b) => order.indexOf(a.id) - order.indexOf(b.id));
-          write();
-        };
-    
-        drag.addEventListener("pointerdown", (e) => {
-          peDraggingEl = li;
-          pePointerId = e.pointerId;
-          drag.setPointerCapture(pePointerId);
-          li.classList.add("dragging");
-        });
-        drag.addEventListener("pointerup", finish);
-        drag.addEventListener("pointercancel", finish);
       }
     
       return li;
     }
     
-      
+  
     // Styled small button
     function iconBtn(label, extraClass = "") {
       const b = document.createElement("button");
@@ -190,36 +237,30 @@
     function announce(msg){ live.textContent = msg; }
   
     /* Events: add / filter / clear */
-
-    // DnD handlers
-    // Reorder while finger moves
-    list.addEventListener("pointermove", (e) => {
-      if (!peDraggingEl || e.pointerId !== pePointerId) return;
-      e.preventDefault(); // stop page scroll while dragging
-      const after = getAfterElement(list, e.clientY);
-      if (after == null) list.appendChild(peDraggingEl);
-      else list.insertBefore(peDraggingEl, after);
-    }, { passive: false });
-
-    // Desktop live reorder preview
+  
+    // Container-level DnD handlers
+    // Mobile/touch reorder while moving
+  
+    // Desktop live preview + drop
     list.addEventListener("dragover", (e) => {
       e.preventDefault();
+      if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
       const draggingEl = list.querySelector(".task.dragging");
       if (!draggingEl) return;
       const after = getAfterElement(list, e.clientY);
       if (after == null) list.appendChild(draggingEl);
       else list.insertBefore(draggingEl, after);
     });
-
-    // Desktop: persist after drop
+  
     list.addEventListener("drop", (e) => {
       e.preventDefault();
       const order = [...list.children].map(el => el.dataset.id);
       tasks.sort((a,b) => order.indexOf(a.id) - order.indexOf(b.id));
       write();
     });
-
-
+  
+  
+  
     form.addEventListener("submit", (e) => {
       e.preventDefault();
       const text = taskInput.value.trim();
@@ -253,3 +294,4 @@
     render();
   })();
   
+});
