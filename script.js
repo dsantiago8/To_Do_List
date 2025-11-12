@@ -1,7 +1,6 @@
 
    (function () {
     /* Storage  */
-    //do i need to host the key elsewhere?
     const STORAGE_KEY = "todo_tasks_v1";
   
     /** @type {{id:string,text:string,done:boolean}[]} */
@@ -192,7 +191,7 @@
   
     /* Events: add / filter / clear */
 
-    // Container-level DnD handlers
+    // DnD handlers
     // Reorder while finger moves
     list.addEventListener("pointermove", (e) => {
       if (!peDraggingEl || e.pointerId !== pePointerId) return;
@@ -202,7 +201,7 @@
       else list.insertBefore(peDraggingEl, after);
     }, { passive: false });
 
-    // Desktop: live reorder preview
+    // Desktop live reorder preview
     list.addEventListener("dragover", (e) => {
       e.preventDefault();
       const draggingEl = list.querySelector(".task.dragging");

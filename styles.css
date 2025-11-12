@@ -109,7 +109,7 @@ body{
 /* Individual task item (created by JS) */
 .task {
     display: grid;
-    /* now 4 columns: drag | checkbox | text | buttons */
+    /* 4 columns: drag | checkbox | text | buttons */
     grid-template-columns: 24px 24px 1fr auto;
     align-items: center;
     gap: .5rem;
@@ -132,7 +132,7 @@ body{
     user-select: none;
     text-align: center;
     /* Needed for mobile DnD */
-    -webkit-user-drag: none;        /* Safari: don't try to drag an image/ghost */
+    -webkit-user-drag: none;       
     -webkit-tap-highlight-color: transparent;
     touch-action: none;              /* stop page from scrolling while dragging */
 
@@ -143,8 +143,8 @@ body{
     background: color-mix(in oklab, var(--panel) 80%, var(--ring));
     transform: translateY(-2px);
     border-color: var(--ring);
-    box-shadow: 0 0 12px rgba(125, 211, 252, 0.25); /* subtle glow for motion */
-    opacity: 0.9; /* makes it look lifted */
+    box-shadow: 0 0 12px rgba(125, 211, 252, 0.25);
+    opacity: 0.9;
     cursor: grabbing;
 }
 
