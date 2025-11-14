@@ -369,7 +369,7 @@
       return;
     }
 
-    tasks.push({ id: crypto.randomUUID(), text, done: false });
+    tasks.unshift({ id: crypto.randomUUID(), text, done: false });
     taskInput.value = "";
     announce("Task added");
     render();
